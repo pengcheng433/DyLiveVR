@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>第一个three.js文件_WebGL三维场景</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            /* 隐藏body窗口区域滚动条 */
+        }
+    </style>
+    <!--引入three.js三维引擎-->
+
+</head>
+
+<body>
+    <button style="position: absolute;" onclick="test()"> testbutton</button>
+    <div id="webgl-con"></div>
+    <script src="http://www.yanhuangxueyuan.com/threejs/build/three.js"></script>
+    <script src="http://www.yanhuangxueyuan.com/threejs/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        function test() {
+            stopflag=true
+            currentHome = currentHome === "home1" ? "home2" : "home1";
+            // var raycaster = new THREE.Raycaster();
+            // var mouse = new THREE.Vector2();
+            // raycaster.setFromCamera({
+            //     x: -1, y: 1
+            // }, camera);
+            render();
+            initHome();
+        }
+
+
+        // 记录当前是在哪个房间
+        let currentHome = 'home1';
+
+        // 纹理加载器
+        let loader = new THREE.TextureLoader();
+
+        // 加载所需要的纹理图片
+        let texture1 = loader.load('./img/home1_left.jpg')
+        let home1_left = new THREE.MeshBasicMaterial({ map: texture1, side: THREE.DoubleSide, });
+
+        let texture3 = loader.load('./img/home1_right.jpg')
+        let home1_right = new THREE.MeshBasicMaterial({ map: texture3, side: THREE.DoubleSide });
+
+        let texture6 = loader.load('./img/home1_top.jpg')
+        let home1_top = new THREE.MeshBasicMaterial({ map: texture6, side: THREE.DoubleSide });
+
+        let texture5 = loader.load('./img/home1_bottom.jpg')
+        let home1_bottom = new THREE.MeshBasicMaterial({ map: texture5, side: THREE.DoubleSide });
+
+        let texture4 = loader.load('./img/home1_front.jpg')
+        let home1_front = new THREE.MeshBasicMaterial({ map: texture4, side: THREE.DoubleSide });
+
+        let texture2 = loader.load('./img/home1_back.jpg')
+        let home1_back = new THREE.MeshBasicMaterial({ map: texture2, side: THREE.DoubleSide });
+
+
+        // 第二个房间贴图材质
+        let texture2_1 = loader.load('./img/home2_left.jpg')
+        let home2_left = new THREE.MeshBasicMaterial({ map: texture2_1, side: THREE.DoubleSide });
+
+        let texture2_2 = loader.load('./img/home2_right.jpg')
+        let home2_right = new THREE.MeshBasicMaterial({ map: texture2_2, side: THREE.DoubleSide });
+
+        let texture2_3 = loader.load('./img/home2_top.jpg')
+        let home2_top = new THREE.MeshBasicMaterial({ map: texture2_3, side: THREE.DoubleSide });
+
+        let texture2_4 = loader.load('./img/home2_bottom.jpg')
+        let home2_bottom = new THREE.MeshBasicMaterial({ map: texture2_4, side: THREE.DoubleSide });
+
+        let texture2_5 = loader.load('./img/home2_front.jpg')
+        let home2_front = new THREE.MeshBasicMaterial({ map: texture2_5, side: THREE.DoubleSide });
+
+        let texture2_6 = loader.load('./img/home2_back.jpg')
+        let home2_back = new THREE.MeshBasicMaterial({ map: texture2_6, side: THREE.DoubleSide });
+
+        // 房间数据
+        let homeObj = {
+            home1: {
+                materials: [home1_left, home1_right, home1_top, home1_bottom, home1_front, home1_back],
+                btnPosition: [-16, -8, -9]
+            },
+            home2: {
+                materials: [home2_left, home2_right, home2_top, home2_bottom, home2_front, home2_back],
+                btnPosition: [18, -8, -7]
+            },
+        }
+
+        let scene, camera, renderer, controls;
+        let width = window.innerWidth;
+        let height = window.innerHeight
+
+
+        function initBaseFactor() {
+            scene = new THREE.Scene();
+
+            // 创建聚光灯
+            var spotLight = new THREE.SpotLight(0xFFFFFF);
+            spotLight.position.set(130, 130, -130);
+            spotLight.castShadow = true;
+            spotLight.angle = Math.PI / 4;
+            spotLight.shadow.penumbra = 0.05
+            spotLight.shadow.mapSize.width = 1024;
+            spotLight.shadow.mapSize.innerHeight = 1024;
+            // 添加聚光灯
+            scene.add(spotLight)
+
+            // 初始化相机
+            camera = new THREE.PerspectiveCamera(90, width / height, 0.1, 1000);
+            camera.position.x = 0;
+            camera.position.y = 0;
+            camera.position.z = 10;
+
+            // 初始化渲染器
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(width, height);
+            renderer.setClearColor(new THREE.Color("#dddddd"));
+
+            document.getElementById("webgl-con").appendChild(renderer.domElement);
+
+
+            var raycaster = new THREE.Raycaster();
+            var mouse = new THREE.Vector2();
+
+            function onMouseDown(event) {
+            // console.log(event)
+            console.log(scene)
+                mouse.x = (event.clientX / width) * 2 - 1;
+                mouse.y = -(event.clientY / height) * 2 + 1;
+
+                //将平面坐标系转为世界坐标系
+                // console.log(mouse);
+
+                raycaster.setFromCamera(mouse, camera);
+
+                //得到点击的几何体
+                var raycasters = raycaster.intersectObjects(scene.children);
+                console.log(raycasters);
+                if (raycasters[0].object.name === 'locationBtn') {
+                    currentHome = currentHome === "home1" ? "home2" : "home1";
+                    // 重新加载房间信息
+                    initHome();
+                }
+            }
+            //监视鼠标左键按下事件
+            window.addEventListener("mousedown", onMouseDown, false);
+
+            // 创建controls对象;
+            controls = new THREE.OrbitControls(camera, renderer.domElement)
+            controls.enableDamping = true; //动态阻尼系数 就是鼠标拖拽旋转灵敏度
+
+            controls.minDistance = 0.01;
+            controls.maxDistance = 20;
+
+            // 监听控制器的鼠标事件，执行渲染内容   无用
+            // controls.addEventListener('change', () => {
+            //     renderer.render(scene, camera)
+            // })
+
+            initHome();
+            render();
+        }
+
+
+
+        function initHome() {
+            // 切换场景前把之前的物体清除掉
+            let homeMesh1 = scene.getObjectByName('homeMesh')
+            let locationBtn = scene.getObjectByName('locationBtn')
+            scene.remove(homeMesh1, locationBtn)
+
+            // 创建一个矩形，贴上六张材质图片，模拟室内效果
+            let homeGeoMetry = new THREE.BoxGeometry(40, 40, 40);
+            let homeMesh = new THREE.Mesh(homeGeoMetry, homeObj[currentHome].materials);
+            homeMesh.castShadow = true
+            homeMesh.position.set(0, 0, 0);
+            homeMesh.geometry.scale(1, 1, -1);
+            homeMesh.name = "homeMesh"
+            scene.add(homeMesh);
+
+            // 添加一个圆形按钮，点击后跳转到其他房间场景
+            let planeGemetry = new THREE.CircleGeometry(1.2, 20);
+            let planeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+
+            let planeMesh = new THREE.Mesh(planeGemetry, planeMaterial);
+            planeMesh.position.set(...homeObj[currentHome].btnPosition)
+            planeMesh.rotateX(0.5 * Math.PI)
+            console.log(0.5 * Math.PI)
+     
+
+            planeMesh.name = "locationBtn"
+            planeMesh.position = {
+                x: 10,
+                y: 10,
+                z: 10,
+            }
+            scene.add(planeMesh);
+
+
+        }
+        let flagwhilte = true;
+
+        let stopflag = false;
+        function render() {
+            requestAnimationFrame(render);
+            if (!stopflag) {
+                if (flagwhilte) {
+                    scene.rotation.y += 0.0005
+                    if (scene.rotation.y > 4) {
+                        flag = false;
+                    }
+                } else {
+                    scene.rotation.y -= 0.0005
+                    if (scene.rotation.y < 0) {
+                        flagwhilte = true;
+                    }
+                }
+            }
+            //   切换场景共，修改摄像头角度等等
+            if (stopflag) {
+                scene.rotation.y = 0
+                scene.rotation.x = 0
+                scene.rotation.z = 0
+            }
+
+
+
+            renderer.render(scene, camera);
+        }
+
+        window.onload = initBaseFactor
+
+
+
+    </script>
+</body>
+
+</html>
